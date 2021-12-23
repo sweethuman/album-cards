@@ -1,6 +1,6 @@
 module.exports = {
   siteMetadata: {
-    siteUrl: "https://www.yourdomain.tld",
+    siteUrl: "https://cards.sweethuman.tech",
     title: "Album Cards",
   },
   plugins: [
@@ -22,6 +22,14 @@ module.exports = {
         path: "./src/images/",
       },
       __key: "images",
+    },
+    {
+      resolve: "gatsby-plugin-web-font-loader",
+      options: {
+        google: {
+          families: ["Roboto", "Material Icons"],
+        },
+      },
     },
   ],
 };
