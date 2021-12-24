@@ -26,16 +26,22 @@
     "gatsby-plugin-sitemap": "^5.4.0",
     "gatsby-plugin-web-font-loader": "^1.0.4",
     "gatsby-source-filesystem": "^4.4.0",
+    "gatsby-theme-material-ui": "^5.1.0",
     "gatsby-transformer-sharp": "^4.4.0",
+    "qrcode": "^1.5.0",
+    "qrcode-with-logos": "^1.0.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "react-helmet": "^6.1.0"
+    "react-helmet": "^6.1.0",
+    "react-to-print": "^2.14.2"
   },
   "volta": {
     "node": "16.13.1",
     "npm": "8.3.0"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.4.2",
+    "@types/react-helmet": "^6.1.4",
     "prettier": "^2.5.1"
   }
 }
