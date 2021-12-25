@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import { Box, Button, Container, Typography } from "@mui/material";
 import { Link } from "gatsby-theme-material-ui";
 import { navigate } from "gatsby";
+import { StaticImage } from "gatsby-plugin-image";
 
 const IndexPage = () => {
   return (
@@ -26,9 +27,16 @@ const IndexPage = () => {
               alignItems: "center",
               gap: "2rem",
             }}>
-            <Typography variant="h1" component="h1">
-              Album Cards
-            </Typography>
+            <StaticImage
+              src="../images/logo_transparent.png"
+              alt="Logo"
+              layout="constrained"
+              height={400}
+              loading="eager"
+              placeholder="tracedSVG"
+              formats={["png"]}
+              trim
+            />
             <Typography variant="h5" component="h5">
               Print out a physical version of a digital album to put in your collection. Scan and play.
             </Typography>
