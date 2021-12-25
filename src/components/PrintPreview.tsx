@@ -44,6 +44,7 @@ const PrintPreview: React.FC<Props> = ({ album }) => {
       if (!imageRef) return;
       const fac = new FastAverageColor();
       let color = await fac.getColorAsync(imageRef.current, { algorithm: "simple" });
+      if (cancel) return;
       let contrast = contrastColor({ bgColor: color.hex });
       let result = await new QrCodeWithLogo({
         content: `https://songwhip.com/${album.url}`,

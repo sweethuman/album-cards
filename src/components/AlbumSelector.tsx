@@ -1,7 +1,8 @@
-import { Box, Card, CardActions, CardContent, CardMedia, Typography } from "@mui/material";
+import { Card, CardActions, CardContent, CardMedia, Stack, Typography } from "@mui/material";
 import * as React from "react";
 import { Album } from "../types/searchResponse";
-import { Link } from "gatsby-theme-material-ui";
+import { Button } from "gatsby-theme-material-ui";
+import { navigate } from "gatsby";
 
 type Props = {
   album: Album;
@@ -21,7 +22,7 @@ const AlbumSelector: React.FC<Props> = ({ album }) => {
           },
         }}
       />
-      <Box>
+      <Stack>
         <CardContent>
           <Typography component="div" variant="h5">
             {album.name}
@@ -30,12 +31,19 @@ const AlbumSelector: React.FC<Props> = ({ album }) => {
             {album.artists.map((artist) => artist.name).join(", ")}
           </Typography>
         </CardContent>
-        <CardActions>
-          <Link size="small" to={`/app/print`} state={{ sourceUrl: album.sourceUrl }}>
+        <CardActions sx={{ ml: "8px" }}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() =>
+              navigate("/app/print", {
+                state: { sourceUrl: album.sourceUrl },
+              })
+            }>
             Select
-          </Link>
+          </Button>
         </CardActions>
-      </Box>
+      </Stack>
     </Card>
   );
 };

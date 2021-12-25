@@ -1,23 +1,26 @@
 import * as React from "react";
-import { alpha, AppBar, Box, Container, InputBase, Theme, Toolbar } from "@mui/material";
+import { alpha, AppBar, Box, Container, InputBase, Stack, Theme, Toolbar, Typography } from "@mui/material";
 import { Search } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { EmptySearchResponse, SearchResponse } from "../../types/searchResponse";
 import axios from "axios";
 import AlbumSelector from "../../components/AlbumSelector";
+import LoadingAlbumSelector from "../../components/LoadingAlbumSelector";
 
 const Offset = () => <Box sx={{ height: "2rem" }} />;
 
 const Default: React.FC = () => {
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SearchResponse>(EmptySearchResponse);
   const [search, setSearch] = useState("");
   useEffect(() => {
+    if (search == "") return;
     const controller = new AbortController();
     let cancel = false;
+    setLoading(true);
 
     async function startSearch() {
       try {
-        if (search == "") return;
         let result = await axios.get("https://music.gheo.workers.dev/api/search", {
           params: {
             q: search,
@@ -28,6 +31,7 @@ const Default: React.FC = () => {
         });
         if (cancel) return;
         setData(result.data);
+        setLoading(false);
       } catch (e) {
         if (axios.isCancel(e)) {
           return;
@@ -98,11 +102,26 @@ const Default: React.FC = () => {
       </AppBar>
       <Offset />
       <Container>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-          {data.data.albums.map((album) => (
-            <AlbumSelector album={album} key={album.sourceUrl} />
-          ))}
-        </Box>
+        <Stack spacing="2rem">
+          {loading ? (
+            [...Array(5).keys()].map((i) => <LoadingAlbumSelector key={i} />)
+          ) : data.data.albums.length == 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                textAlign: "center",
+                height: "100%",
+              }}>
+              <Typography variant="h5" component="h5">
+                We have found no album matching your query. Search again.
+              </Typography>
+            </Box>
+          ) : (
+            data.data.albums.map((album) => <AlbumSelector album={album} key={album.sourceUrl} />)
+          )}
+        </Stack>
       </Container>
     </Box>
   );
