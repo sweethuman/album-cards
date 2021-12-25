@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import * as React from "react";
 import { jsx, css } from "@emotion/react";
+
 type Props = {
   dimension: string;
   qrCodeUrl: string;

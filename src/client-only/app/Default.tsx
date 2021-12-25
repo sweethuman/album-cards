@@ -1,65 +1,110 @@
 import * as React from "react";
-import { useEffect, useRef, useState } from "react";
-import { Button, Container, Typography } from "@mui/material";
-import { useReactToPrint } from "react-to-print";
-import ToPrint from "../../components/ToPrint";
-import QrCodeWithLogo from "qrcode-with-logos";
-import FastAverageColor from "fast-average-color";
-const { contrastColor } = require("contrast-color");
+import { alpha, AppBar, Box, Container, InputBase, Theme, Toolbar } from "@mui/material";
+import { Search } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { EmptySearchResponse, SearchResponse } from "../../types/searchResponse";
+import axios from "axios";
+import AlbumSelector from "../../components/AlbumSelector";
+
+const Offset = () => <Box sx={{ height: "2rem" }} />;
 
 const Default: React.FC = () => {
-  const [dataUrl, setDataUrl] = useState("");
-  const [albumArtUrl, setAlbumArtUrl] = useState("https://i.scdn.co/image/ab67616d0000b273b6fd138ec84f89c20e2a9883");
-  const [dimension] = useState("20cm");
-  const imageRef = useRef<HTMLImageElement>(null);
-  const componentRef = useRef(null);
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-  });
+  const [data, setData] = useState<SearchResponse>(EmptySearchResponse);
+  const [search, setSearch] = useState("");
   useEffect(() => {
+    const controller = new AbortController();
     let cancel = false;
 
-    async function calculateQrCode() {
-      if (!imageRef) return;
-      const fac = new FastAverageColor();
-      let color = await fac.getColorAsync(imageRef.current, { algorithm: "simple" });
-      let contrast = contrastColor({ bgColor: color.hex });
-      let result = await new QrCodeWithLogo({
-        content: "https://songwhip.com/nu-3/we-love-the-sun",
-        width: 3000,
-        logo: {
-          src: "https://i.scdn.co/image/c3f834aba5e8b10ccb2145f2b64f77a9ef7035c4",
-          bgColor: color.hex,
-          logoRadius: 360,
-        },
-        nodeQrCodeOptions: {
-          color: {
-            dark: contrast,
-            light: color.hex,
+    async function startSearch() {
+      try {
+        if (search == "") return;
+        let result = await axios.get("https://music.gheo.workers.dev/api/search", {
+          params: {
+            q: search,
+            country: "US",
+            limit: 10,
           },
-        },
-      }).getCanvas();
-      if (cancel) return;
-      setDataUrl(result.toDataURL("image/webp", 1));
+          signal: controller.signal,
+        });
+        if (cancel) return;
+        setData(result.data);
+      } catch (e) {
+        if (axios.isCancel(e)) {
+          return;
+        }
+        throw e;
+      }
     }
 
-    calculateQrCode();
-
+    const timeoutId = setTimeout(startSearch, 1000);
     return () => {
       cancel = true;
+      controller.abort();
+      clearTimeout(timeoutId);
     };
-  }, [imageRef]);
+  }, [search]);
   return (
-    <Container>
-      <ToPrint dimension={dimension} qrCodeUrl={dataUrl} albumArtUrl={albumArtUrl} ref={componentRef} />
-      <Typography variant="h1">QR Code Preview</Typography>
-      <img src={dataUrl} alt="qrcode" />
-      <div>
-        <Typography variant="h1">Album Art Preview</Typography>
-        <img src={albumArtUrl} ref={imageRef} alt="album art" crossOrigin="anonymous" />
-      </div>
-      <Button onClick={() => handlePrint()}>Print this out!</Button>
-    </Container>
+    <Box>
+      <AppBar position="sticky">
+        <Toolbar sx={{ justifyContent: "center" }}>
+          <Box
+            sx={{
+              position: "relative",
+              borderRadius: (theme: Theme) => theme.shape.borderRadius,
+              backgroundColor: (theme: Theme) => alpha(theme.palette.common.white, 0.15),
+              "&:hover": {
+                backgroundColor: (theme: Theme) => alpha(theme.palette.common.white, 0.25),
+              },
+              marginRight: (theme: Theme) => theme.spacing(2),
+              marginLeft: (theme: Theme) => ({ xs: 0, sm: theme.spacing(3) }),
+              width: {
+                xs: "100%",
+                sm: "auto",
+              },
+            }}>
+            <Box
+              sx={{
+                padding: (theme: Theme) => theme.spacing(0, 2),
+                height: "100%",
+                position: "absolute",
+                pointerEvents: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+              <Search />
+            </Box>
+            <InputBase
+              sx={{
+                color: "inherit",
+                "& .MuiInputBase-input": {
+                  padding: (theme: Theme) => theme.spacing(1, 1, 1, 0),
+                  // vertical padding + font size from searchIcon
+                  paddingLeft: (theme: Theme) => `calc(1em + ${theme.spacing(4)})`,
+                  transition: (theme: Theme) => theme.transitions.create("width"),
+                  width: {
+                    xs: "100%",
+                    md: "50ch",
+                  },
+                },
+              }}
+              inputProps={{ "aria-label": "search" }}
+              placeholder="Search album..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Box>
+        </Toolbar>
+      </AppBar>
+      <Offset />
+      <Container>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+          {data.data.albums.map((album) => (
+            <AlbumSelector album={album} key={album.sourceUrl} />
+          ))}
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

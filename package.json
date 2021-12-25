@@ -17,7 +17,9 @@
   "dependencies": {
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
+    "@mui/icons-material": "^5.2.5",
     "@mui/material": "^5.2.5",
+    "axios": "^0.24.0",
     "contrast-color": "^1.0.1",
     "fast-average-color": "^7.0.1",
     "gatsby": "^4.4.0",
