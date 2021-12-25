@@ -1,66 +1,58 @@
 import * as React from "react";
-import { useEffect, useRef, useState } from "react";
-import { Button, Container, Typography } from "@mui/material";
-import { useReactToPrint } from "react-to-print";
-import ToPrint from "../../components/ToPrint";
-import QrCodeWithLogo from "qrcode-with-logos";
-import FastAverageColor from "fast-average-color";
-
-const { contrastColor } = require("contrast-color");
+import { useLocation } from "@reach/router";
+import { useEffect, useState } from "react";
+import { Box, CircularProgress } from "@mui/material";
+import { State } from "../../types/printState";
+import { CreateResponse } from "../../types/createResponse";
+import PrintPreview from "../../components/PrintPreview";
+import axios from "axios";
 
 const Print: React.FC = () => {
-  const [dataUrl, setDataUrl] = useState("");
-  const [albumArtUrl, setAlbumArtUrl] = useState("https://i.scdn.co/image/ab67616d0000b273b6fd138ec84f89c20e2a9883");
-  const [dimension] = useState("20cm");
-  const imageRef = useRef<HTMLImageElement>(null);
-  const componentRef = useRef(null);
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-  });
+  const location = useLocation();
+  const state = location.state as State;
+  const [createData, setCreateData] = useState<CreateResponse>(null);
   useEffect(() => {
+    const controller = new AbortController();
     let cancel = false;
 
-    async function calculateQrCode() {
-      if (!imageRef) return;
-      const fac = new FastAverageColor();
-      let color = await fac.getColorAsync(imageRef.current, { algorithm: "simple" });
-      let contrast = contrastColor({ bgColor: color.hex });
-      let result = await new QrCodeWithLogo({
-        content: "some content",
-        width: 3000,
-        logo: {
-          src: "https://i.scdn.co/image/c3f834aba5e8b10ccb2145f2b64f77a9ef7035c4",
-          bgColor: color.hex,
-          logoRadius: 360,
-        },
-        nodeQrCodeOptions: {
-          color: {
-            dark: contrast,
-            light: color.hex,
+    async function startLoading() {
+      try {
+        let result = await axios.post(
+          "https://music.gheo.workers.dev/api/create",
+          {
+            country: "US",
+            url: state.sourceUrl,
           },
-        },
-      }).getCanvas();
-      if (cancel) return;
-      setDataUrl(result.toDataURL("image/webp", 1));
+          {
+            signal: controller.signal,
+          }
+        );
+        if (cancel) return;
+        setCreateData(result.data);
+      } catch (e) {
+        if (axios.isCancel(e)) {
+          return;
+        }
+        throw e;
+      }
     }
 
-    calculateQrCode();
-
+    startLoading();
     return () => {
       cancel = true;
+      controller.abort();
     };
-  }, [imageRef]);
+  }, [state.sourceUrl]);
   return (
-    <Container>
-      <ToPrint dimension={dimension} qrCodeUrl={dataUrl} albumArtUrl={albumArtUrl} ref={componentRef} />
-      <Typography variant="h1">QR Code Preview</Typography>
-      <img src={dataUrl} alt="qrcode" />
-      <div>
-        <Typography variant="h1">Album Art Preview</Typography>
-        <img src={albumArtUrl} ref={imageRef} alt="album art" crossOrigin="anonymous" />
-      </div>
-      <Button onClick={() => handlePrint()}>Print this out!</Button>
-    </Container>
+    <>
+      {createData == null ? (
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+          <CircularProgress size="5rem" />
+        </Box>
+      ) : (
+        <PrintPreview album={createData.data} />
+      )}
+    </>
   );
 };
 

@@ -27,7 +27,7 @@ const AlbumSelector: React.FC<Props> = ({ album }) => {
             {album.name}
           </Typography>
           <Typography variant="subtitle1" color="text.secondary" component="div">
-            {album.artists[0].name}
+            {album.artists.map((artist) => artist.name).join(", ")}
           </Typography>
         </CardContent>
         <CardActions>
