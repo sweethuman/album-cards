@@ -7,6 +7,7 @@ import {
   CardMedia,
   Container,
   InputAdornment,
+  Skeleton,
   Switch,
   TextField,
   Typography,
@@ -18,6 +19,7 @@ import QrCodeWithLogo from "qrcode-with-logos";
 import { contrastColor } from "contrast-color";
 import { AlbumData } from "../types/createResponse";
 import { LoadingButton } from "@mui/lab";
+import { Print } from "@mui/icons-material";
 
 type Props = {
   album: AlbumData;
@@ -28,7 +30,6 @@ const PrintPreview: React.FC<Props> = ({ album }) => {
   const [showArtist, setShowArtist] = useState(true);
   const [useAlbumTheme, setUseAlbumTheme] = useState(true);
   const [dataUrl, setDataUrl] = useState("");
-  const [albumArtUrl, setAlbumArtUrl] = useState(album.image);
   const [dimension, setDimension] = useState("20");
   const imageRef = useRef<HTMLImageElement>(null);
   const componentRef = useRef(null);
@@ -36,13 +37,14 @@ const PrintPreview: React.FC<Props> = ({ album }) => {
     content: () => componentRef.current,
   });
   useEffect(() => {
+    setProcessing(true);
     let cancel = false;
 
     async function calculateQrCode() {
-      setProcessing(true);
       if (!imageRef) return;
       const fac = new FastAverageColor();
       let color = await fac.getColorAsync(imageRef.current, { algorithm: "simple" });
+      if (cancel) return;
       let contrast = contrastColor({ bgColor: color.hex });
       let result = await new QrCodeWithLogo({
         content: `https://songwhip.com/${album.url}`,
@@ -68,9 +70,10 @@ const PrintPreview: React.FC<Props> = ({ album }) => {
       setProcessing(false);
     }
 
-    calculateQrCode();
+    const timeoutId = setTimeout(calculateQrCode, 500);
 
     return () => {
+      clearTimeout(timeoutId);
       cancel = true;
     };
   }, [imageRef, showArtist, useAlbumTheme]);
@@ -87,13 +90,20 @@ const PrintPreview: React.FC<Props> = ({ album }) => {
       <Typography variant="h2" component="h2">
         Preview
       </Typography>
-      <ToPrint dimension={`${dimension}cm`} qrCodeUrl={dataUrl} albumArtUrl={albumArtUrl} ref={componentRef} />
+      <ToPrint dimension={`${dimension}cm`} qrCodeUrl={dataUrl} albumArtUrl={album.image} ref={componentRef} />
       <Box sx={{ display: "flex", justifyContent: "space-evenly", alignItems: "center", gap: "0.5rem" }}>
-        <Card sx={{ flex: 1 }}>
+        <Card sx={{ flex: 1, position: "relative" }}>
+          {processing ? (
+            <Skeleton
+              sx={{ position: "absolute", height: "100%", width: "100%", bgcolor: "grey.500" }}
+              animation="wave"
+              variant="rectangular"
+            />
+          ) : null}
           <CardMedia image={dataUrl} alt="QRCode Preview" component="img" />
         </Card>
         <Card sx={{ flex: 1 }}>
-          <CardMedia src={albumArtUrl} ref={imageRef} alt="album art" crossOrigin="anonymous" component="img" />
+          <CardMedia src={album.image} ref={imageRef} alt="album art" crossOrigin="anonymous" component="img" />
         </Card>
       </Box>
       <Box
@@ -105,16 +115,17 @@ const PrintPreview: React.FC<Props> = ({ album }) => {
           gap: "1rem",
         }}>
         <Typography variant="h5" component="p">
-          Print this to the desired size, cut, stick both sides to a surface or to a each other and put it in your
+          Print this to the desired size, cut, stick both sides to a surface or to each other and put it in your
           collection.
         </Typography>
         <LoadingButton
           onClick={() => handlePrint()}
           size="large"
           loading={processing}
+          endIcon={<Print />}
           loadingPosition="end"
           variant="contained">
-          Print this out!
+          Print this out
         </LoadingButton>
       </Box>
       <Card>
