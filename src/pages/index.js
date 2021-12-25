@@ -1,8 +1,7 @@
 import * as React from "react";
 import Layout from "../components/Layout";
-import { Box, Button, Container, Typography } from "@mui/material";
-import { Link } from "gatsby-theme-material-ui";
-import { navigate } from "gatsby";
+import { Box, Container, Typography } from "@mui/material";
+import { Link, Button } from "gatsby-theme-material-ui";
 import { StaticImage } from "gatsby-plugin-image";
 
 const IndexPage = () => {
@@ -40,7 +39,7 @@ const IndexPage = () => {
             <Typography variant="h5" component="h5">
               Print out a physical version of a digital album to put in your collection. Scan and play.
             </Typography>
-            <Button onClick={() => navigate("/app")} size="large" variant="contained">
+            <Button to="/app" size="large" variant="contained">
               Go to App
             </Button>
           </Box>
